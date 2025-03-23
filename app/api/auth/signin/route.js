@@ -1,66 +1,66 @@
-import { connectDB } from '@/lib/db'
-import User from '@/models/User'
-import bcryptjs from 'bcryptjs'
-import jwt from 'jsonwebtoken'
-import { NextResponse } from 'next/server'
+import { connectDB } from "@/lib/db";
+import User from "@/models/User";
+import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
-    await connectDB()
+    await connectDB();
 
-    const { email, password } = await request.json()
+    const { email, password } = await request.json();
 
-    if (!email || !password || email === '' || password === '') {
+    if (!email || !password || email === "" || password === "") {
       return NextResponse.json(
-        { success: false, message: 'All fields are required' },
+        { success: false, message: "All fields are required" },
         { status: 400 }
-      )
+      );
     }
 
-    const validUser = await User.findOne({ email })
+    const validUser = await User.findOne({ email });
 
     if (!validUser) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
+        { success: false, message: "User not found" },
         { status: 404 }
-      )
+      );
     }
 
-    const validPassword = bcryptjs.compareSync(password, validUser.password)
+    const validPassword = bcryptjs.compareSync(password, validUser.password);
 
     if (!validPassword) {
       return NextResponse.json(
-        { success: false, message: 'Invalid password' },
+        { success: false, message: "Invalid password" },
         { status: 400 }
-      )
+      );
     }
 
     const token = jwt.sign(
       { id: validUser._id, isAdmin: validUser.isAdmin },
       process.env.JWT_SECRET
-    )
+    );
 
-    const { password: pass, ...rest } = validUser._doc
+    const { password: pass, ...rest } = validUser._doc;
 
     const response = NextResponse.json(
       { success: true, ...rest },
       { status: 200 }
-    )
+    );
 
-    response.cookies.set('access_token', token, {
+    response.cookies.set("access_token", token, {
       httpOnly: true,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      path: "/",
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: "strict",
       maxAge: 60 * 60 * 24 * 7, // 1 week
-    })
+    });
 
-    return response
+    return response;
   } catch (error) {
-    console.error('Signin error:', error)
+    console.error("Signin error:", error);
     return NextResponse.json(
-      { success: false, message: error.message || 'Internal Server Error' },
+      { success: false, message: error.message || "Internal Server Error" },
       { status: error.statusCode || 500 }
-    )
+    );
   }
 }

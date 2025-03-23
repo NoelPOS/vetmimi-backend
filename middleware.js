@@ -1,33 +1,39 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from "next/server";
 
 export function middleware(request) {
-  // You can add global middleware logic here
-  // For example, logging, CORS, etc.
+  if (request.nextUrl.pathname.startsWith("/api")) {
+    const origin = request.headers.get("origin") || "*";
 
-  // Example: Add CORS headers for API routes
-  if (request.nextUrl.pathname.startsWith('/api')) {
-    const response = NextResponse.next()
+    // Handle OPTIONS method for preflight requests
+    if (request.method === "OPTIONS") {
+      return new NextResponse(null, {
+        headers: {
+          "Access-Control-Allow-Origin": origin,
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+          "Access-Control-Allow-Credentials": "true",
+        },
+      });
+    }
 
-    response.headers.set('Access-Control-Allow-Origin', '*')
+    const response = NextResponse.next();
+    response.headers.set("Access-Control-Allow-Origin", origin);
     response.headers.set(
-      'Access-Control-Allow-Methods',
-      'GET, POST, PUT, DELETE, OPTIONS'
-    )
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
     response.headers.set(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Authorization'
-    )
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization"
+    );
+    response.headers.set("Access-Control-Allow-Credentials", "true");
 
-    return response
+    return response;
   }
 
-  return NextResponse.next()
+  return NextResponse.next();
 }
 
-// Configure which paths this middleware will run on
 export const config = {
-  matcher: [
-    // Apply to all API routes
-    '/api/:path*',
-  ],
-}
+  matcher: ["/api/:path*"],
+};
